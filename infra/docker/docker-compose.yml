@@ -1,0 +1,233 @@
+﻿name: fire-forecast
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.5
+    container_name: fire-forecast-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fireforecast}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fireforecast}
+      POSTGRES_DB: ${POSTGRES_DB:-fire_forecast}
+    ports:
+      - "5433:5432"
+    volumes:
+      - "${DOCKER_VOLUMES_DOCKER}/postgres:/var/lib/postgresql/data"
+      - "../postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fireforecast} -d ${POSTGRES_DB:-fire_forecast}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: fire-forecast-nats
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - "${DOCKER_VOLUMES_DOCKER}/nats:/data"
+
+  minio:
+    image: minio/minio:latest
+    container_name: fire-forecast-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-fireforecast}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-fireforecast_minio_password}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - "${DOCKER_VOLUMES_DOCKER}/minio:/data"
+
+  prefect:
+    image: prefecthq/prefect:3-latest
+    container_name: fire-forecast-prefect
+    command: prefect server start --host 0.0.0.0
+    ports:
+      - "4202:4200"
+    volumes:
+      - "${DOCKER_VOLUMES_DOCKER}/prefect:/root/.prefect"
+
+  api-gateway:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecast-api-gateway
+    working_dir: /app/services/api-gateway
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres
+      - nats
+      - minio
+
+  catalog-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecast-catalog-service
+    working_dir: /app/services/catalog-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8101 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8101:8101"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres
+
+  ingestion-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecast-ingestion-service
+    working_dir: /app/services/ingestion-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8102 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8102:8102"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres
+      - nats
+      - minio
+
+  preprocessing-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecast-preprocessing-service
+    working_dir: /app/services/preprocessing-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8103 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8103:8103"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres
+      - minio
+
+  segmentation-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecast-segmentation-service
+    working_dir: /app/services/segmentation-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8104 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8104:8104"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres
+      - minio
+
+  forecasting-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecasting-service
+    working_dir: /app/services/forecasting-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8105 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8105:8105"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres
+      - nats
+      - minio
+
+  pinn-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecast-pinn-service
+    working_dir: /app/services/pinn-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8106 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8106:8106"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres
+      - minio
+
+  simulation-adapter-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecast-simulation-adapter-service
+    working_dir: /app/services/simulation-adapter-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8107 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8107:8107"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres
+      - minio
+
+  visualization-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecast-visualization-service
+    working_dir: /app/services/visualization-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8108 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8108:8108"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres
+      - minio
+
+  plugin-adapter-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.fastapi
+    container_name: fire-forecast-plugin-adapter-service
+    working_dir: /app/services/plugin-adapter-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8109 --reload
+    env_file:
+      - ../../.env
+    ports:
+      - "8109:8109"
+    volumes:
+      - "../..:/app"
+      - "${DATA_ROOT_DOCKER}:/data"
+    depends_on:
+      - postgres

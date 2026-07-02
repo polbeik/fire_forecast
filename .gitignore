@@ -1,0 +1,40 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Environment / local secrets
+.env
+.env.local
+.env.paths
+*.backup_*
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# IDE
+.vscode/
+.idea/
+
+# Large data must stay outside git
+data/
+*.h5
+*.hdf5
+*.tif
+*.tiff
+*.nc
+*.zarr
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Generated outputs
+outputs/
+reports/
+*.log
