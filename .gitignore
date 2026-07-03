@@ -38,3 +38,5 @@ data/
 outputs/
 reports/
 *.log
+
+.docker-volumes/
