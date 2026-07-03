@@ -10,8 +10,10 @@
     "http://localhost:8106/health",
     "http://localhost:8107/health",
     "http://localhost:8108/health",
-    "http://localhost:8109/health"
-  ),
+    "http://localhost:8109/health",
+    "http://localhost:9000/minio/health/live",
+    "http://localhost:8222/healthz",
+    "http://localhost:4202/api/health"  ),
   [switch]$RequireHttp
 )
 
