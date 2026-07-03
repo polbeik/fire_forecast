@@ -63,7 +63,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
@@ -82,7 +82,7 @@ services:
     ports:
       - "8101:8101"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
@@ -99,7 +99,7 @@ services:
     ports:
       - "8102:8102"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
@@ -118,7 +118,7 @@ services:
     ports:
       - "8103:8103"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
@@ -136,7 +136,7 @@ services:
     ports:
       - "8104:8104"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
@@ -154,7 +154,7 @@ services:
     ports:
       - "8105:8105"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
@@ -173,7 +173,7 @@ services:
     ports:
       - "8106:8106"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
@@ -191,7 +191,7 @@ services:
     ports:
       - "8107:8107"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
@@ -209,7 +209,7 @@ services:
     ports:
       - "8108:8108"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
@@ -227,7 +227,7 @@ services:
     ports:
       - "8109:8109"
     volumes:
-      - "../..:/app"
+      - ".:/app"
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
       - postgres
