@@ -4,27 +4,30 @@
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$ComposeFile = Join-Path $RepoRoot "infra/docker/docker-compose.yml"
-$EnvFile = Join-Path $RepoRoot ".env"
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Resolve-Path (Join-Path $ScriptDir "..")
+Set-Location $RepoRoot
+
+$EnvFile = ".env"
+$ComposeFile = "infra/docker/docker-compose.yml"
 
 if (-not (Test-Path $ComposeFile)) {
   throw "Compose file not found: $ComposeFile"
 }
 
-$ComposeArgs = @("compose", "--project-directory", $RepoRoot, "-f", $ComposeFile)
-
-if (Test-Path $EnvFile) {
-  $ComposeArgs += @("--env-file", $EnvFile)
+if (-not (Test-Path $EnvFile)) {
+  throw "Missing .env. Refusing to run docker compose without explicit env file."
 }
 
-$Cmd = @("down")
+$ComposeArgs = @("--env-file", $EnvFile, "-f", $ComposeFile)
 
+Write-Host "Validating Docker Compose config..."
+docker compose @ComposeArgs config --quiet
+
+$DownArgs = @("down")
 if ($Volumes) {
-  $Cmd += "--volumes"
+  $DownArgs += "-v"
 }
 
-Write-Host "Stopping local Fire Forecast stack..."
-$AllArgs = $ComposeArgs + $Cmd
-& docker @AllArgs
-exit $LASTEXITCODE
+Write-Host "Stopping Fire Forecast stack with explicit .env..."
+docker compose @ComposeArgs @DownArgs

@@ -1,165 +1,107 @@
-﻿param(
-  [int]$WaitSeconds = 60,
-  [string[]]$Url = @(
-    "http://localhost:8000/health",
-    "http://localhost:8101/health",
-    "http://localhost:8102/health",
-    "http://localhost:8103/health",
-    "http://localhost:8104/health",
-    "http://localhost:8105/health",
-    "http://localhost:8106/health",
-    "http://localhost:8107/health",
-    "http://localhost:8108/health",
-    "http://localhost:8109/health",
-    "http://localhost:9000/minio/health/live",
-    "http://localhost:8222/healthz",
-    "http://localhost:4202/api/health"  ),
-  [switch]$RequireHttp
-)
+﻿$ErrorActionPreference = "Stop"
 
-$ErrorActionPreference = "Stop"
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Resolve-Path (Join-Path $ScriptDir "..")
+Set-Location $RepoRoot
 
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$ComposeFile = Join-Path $RepoRoot "infra/docker/docker-compose.yml"
-$EnvFile = Join-Path $RepoRoot ".env"
+$EnvFile = ".env"
+$ComposeFile = "infra/docker/docker-compose.yml"
 
 if (-not (Test-Path $ComposeFile)) {
   throw "Compose file not found: $ComposeFile"
 }
 
 if (-not (Test-Path $EnvFile)) {
-  throw ".env file not found: $EnvFile"
+  throw "Missing .env. Health validation must use the same explicit env file as start/stop."
 }
 
-$ComposeArgs = @(
-  "compose",
-  "--env-file", $EnvFile,
-  "-f", $ComposeFile
-)
+$ComposeArgs = @("--env-file", $EnvFile, "-f", $ComposeFile)
 
 Write-Host "Validating Docker Compose config..."
-$ConfigArgs = $ComposeArgs + @("config", "--quiet")
-& docker @ConfigArgs
-if ($LASTEXITCODE -ne 0) {
-  exit $LASTEXITCODE
-}
+docker compose @ComposeArgs config --quiet
 
 Write-Host ""
 Write-Host "Docker Compose services:"
-$PsArgs = $ComposeArgs + @("ps")
-& docker @PsArgs
+docker compose @ComposeArgs ps
 
-$PsqArgs = $ComposeArgs + @("ps", "-q")
-$ContainerIds = @(& docker @PsqArgs | Where-Object { $_ -and $_.Trim().Length -gt 0 })
+Write-Host ""
+Write-Host "Checking container states..."
 
-if ($LASTEXITCODE -ne 0) {
-  exit $LASTEXITCODE
+$rawJson = docker compose @ComposeArgs ps --format json
+
+if ([string]::IsNullOrWhiteSpace($rawJson)) {
+  throw "docker compose ps returned no JSON output."
 }
 
-if ($ContainerIds.Count -eq 0) {
-  Write-Error "No containers found. Run .\scripts\start-local.ps1 first."
-  exit 1
+if ($rawJson.TrimStart().StartsWith("[")) {
+  $containers = @($rawJson | ConvertFrom-Json)
+} else {
+  $containers = @($rawJson -split "`n" | Where-Object { $_.Trim() } | ForEach-Object { $_ | ConvertFrom-Json })
 }
 
-function Get-ContainerStatus {
-  param(
-    [string[]]$Ids
-  )
+$badContainers = @()
 
-  $Format = '{{.Name}}|{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}'
-  $InspectArgs = @("inspect", "--format", $Format) + $Ids
-  $Lines = @(& docker @InspectArgs)
+foreach ($container in $containers) {
+  $state = [string]$container.State
+  $health = [string]$container.Health
+  $name = [string]$container.Name
+  $service = [string]$container.Service
 
-  foreach ($Line in $Lines) {
-    $Parts = $Line -split '\|'
-    [pscustomobject]@{
-      Name = $Parts[0].TrimStart("/")
-      Status = $Parts[1]
-      Health = $Parts[2]
-    }
+  if ($state -ne "running") {
+    $badContainers += "$service / $name is not running. State=$state"
+    continue
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($health) -and $health -ne "healthy") {
+    $badContainers += "$service / $name is not healthy. Health=$health"
   }
 }
 
-$Deadline = (Get-Date).AddSeconds($WaitSeconds)
-
-do {
-  $Statuses = @(Get-ContainerStatus -Ids $ContainerIds)
-
-  $NotReady = @(
-    $Statuses | Where-Object {
-      $_.Status -ne "running" -or $_.Health -eq "starting" -or $_.Health -eq "unhealthy"
-    }
-  )
-
-  if ($NotReady.Count -eq 0) {
-    break
-  }
-
-  if ((Get-Date) -ge $Deadline) {
-    break
-  }
-
+if ($badContainers.Count -gt 0) {
   Write-Host ""
-  Write-Host "Waiting for containers to become healthy/running..."
-  $NotReady | Format-Table -AutoSize
-  Start-Sleep -Seconds 2
-} while ($true)
-
-$Statuses = @(Get-ContainerStatus -Ids $ContainerIds)
-
-Write-Host ""
-Write-Host "Container health:"
-$Statuses | Sort-Object Name | Format-Table -AutoSize
-
-$Failed = @(
-  $Statuses | Where-Object {
-    $_.Status -ne "running" -or $_.Health -eq "starting" -or $_.Health -eq "unhealthy"
-  }
-)
-
-if ($Failed.Count -gt 0) {
-  Write-Error "One or more containers are not ready."
+  Write-Host "Unhealthy containers:"
+  $badContainers | ForEach-Object { Write-Host " - $_" }
   exit 1
 }
 
-$HttpFailures = @()
+Write-Host "All running containers are healthy according to Docker Compose."
 
 Write-Host ""
-Write-Host "HTTP health endpoints:"
+Write-Host "Checking HTTP health endpoints where applicable..."
 
-foreach ($U in $Url) {
-  $Ok = $false
-  $LastError = $null
+$services = @(docker compose @ComposeArgs config --services)
 
-  while ((Get-Date) -lt $Deadline) {
+$HealthEndpoints = @{
+  "api-gateway"       = "http://localhost:8000/health"
+  "catalog-service"  = "http://localhost:8101/health"
+  "ingestion-service" = "http://localhost:8102/health"
+  "minio"            = "http://localhost:9000/minio/health/live"
+}
+
+$endpointFailures = @()
+
+foreach ($serviceName in $HealthEndpoints.Keys) {
+  if ($services -contains $serviceName) {
+    $url = $HealthEndpoints[$serviceName]
     try {
-      $Response = Invoke-WebRequest -Uri $U -UseBasicParsing -TimeoutSec 5
-
-      if ($Response.StatusCode -ge 200 -and $Response.StatusCode -lt 400) {
-        Write-Host "HTTP OK: $U -> $($Response.StatusCode)"
-        $Ok = $true
-        break
+      $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10
+      if ($response.StatusCode -lt 200 -or $response.StatusCode -ge 300) {
+        $endpointFailures += "$serviceName returned HTTP $($response.StatusCode) at $url"
+      } else {
+        Write-Host "OK $serviceName -> $url"
       }
-
-      $LastError = "Unexpected HTTP status: $($Response.StatusCode)"
     } catch {
-      $LastError = $_.Exception.Message
+      $endpointFailures += "$serviceName failed at $url : $($_.Exception.Message)"
     }
-
-    Start-Sleep -Seconds 2
-  }
-
-  if (-not $Ok) {
-    Write-Warning "HTTP health check failed: $U -> $LastError"
-    $HttpFailures += $U
   }
 }
 
-if ($RequireHttp -and $HttpFailures.Count -gt 0) {
+if ($endpointFailures.Count -gt 0) {
+  Write-Host ""
+  Write-Host "HTTP health failures:"
+  $endpointFailures | ForEach-Object { Write-Host " - $_" }
   exit 1
 }
 
 Write-Host ""
-Write-Host "Local stack health check completed."
-exit 0
-
+Write-Host "Local Fire Forecast stack health validation passed."

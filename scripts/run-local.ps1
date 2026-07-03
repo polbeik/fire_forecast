@@ -1,56 +1,48 @@
-﻿$ErrorActionPreference = "Stop"
+﻿param(
+  [switch]$Build,
+  [switch]$Pull
+)
 
-$PROJECT_ROOT = "C:\Users\hashedUserChain1user\Documents\fire_forecast"
+$ErrorActionPreference = "Stop"
 
-Set-Location $PROJECT_ROOT
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Resolve-Path (Join-Path $ScriptDir "..")
+Set-Location $RepoRoot
 
-Write-Host ""
-Write-Host "Checking Docker daemon..." -ForegroundColor Cyan
+$EnvFile = ".env"
+$ComposeFile = "infra/docker/docker-compose.yml"
 
-docker info *> $null
-
-if ($LASTEXITCODE -ne 0) {
-  Write-Host "Docker is not running or is not reachable." -ForegroundColor Red
-  Write-Host "Open Docker Desktop, wait until the engine is running, then rerun this script." -ForegroundColor Yellow
-  exit 1
+if (-not (Test-Path $ComposeFile)) {
+  throw "Compose file not found: $ComposeFile"
 }
 
-Write-Host "Docker daemon is reachable." -ForegroundColor Green
-
-Write-Host ""
-Write-Host "Validating docker compose configuration..." -ForegroundColor Cyan
-
-docker compose --env-file .env -f infra/docker/docker-compose.yml config *> $null
-
-if ($LASTEXITCODE -ne 0) {
-  Write-Host "Docker compose configuration is invalid." -ForegroundColor Red
-  Write-Host "Printing compose config error details:" -ForegroundColor Yellow
-  docker compose --env-file .env -f infra/docker/docker-compose.yml config
-  exit 1
+if (-not (Test-Path $EnvFile)) {
+  if (Test-Path ".env.example") {
+    Copy-Item ".env.example" $EnvFile
+    Write-Host "Created .env from .env.example"
+  } else {
+    throw "Missing .env and .env.example. Cannot start stack safely."
+  }
 }
 
-Write-Host "Docker compose configuration is valid." -ForegroundColor Green
+$ComposeArgs = @("--env-file", $EnvFile, "-f", $ComposeFile)
 
-Write-Host ""
-Write-Host "Starting Fire Forecast stack..." -ForegroundColor Cyan
+Write-Host "Validating Docker Compose config..."
+docker compose @ComposeArgs config --quiet
 
-docker compose --env-file .env -f infra/docker/docker-compose.yml up --build -d
-
-if ($LASTEXITCODE -ne 0) {
-  Write-Host ""
-  Write-Host "docker compose up failed. Stack was not started correctly." -ForegroundColor Red
-  exit $LASTEXITCODE
+if ($Pull) {
+  Write-Host "Pulling images..."
+  docker compose @ComposeArgs pull
 }
 
-Write-Host ""
-Write-Host "Docker compose status:" -ForegroundColor Cyan
+$UpArgs = @("up", "-d", "--wait")
+if ($Build) {
+  $UpArgs += "--build"
+}
 
-docker compose --env-file .env -f infra/docker/docker-compose.yml ps
+Write-Host "Starting Fire Forecast stack with explicit .env and health wait..."
+docker compose @ComposeArgs @UpArgs
 
 Write-Host ""
-Write-Host "Stack started." -ForegroundColor Green
-Write-Host "API Gateway:    http://localhost:8000" -ForegroundColor Green
-Write-Host "System health:  http://localhost:8000/api/system/health" -ForegroundColor Green
-Write-Host "NATS monitor:   http://localhost:8222" -ForegroundColor Green
-Write-Host "MinIO console:  http://localhost:9001" -ForegroundColor Green
-Write-Host "Prefect server: http://localhost:4202" -ForegroundColor Green
+Write-Host "Docker Compose services:"
+docker compose @ComposeArgs ps
