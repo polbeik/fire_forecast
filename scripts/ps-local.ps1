@@ -1,5 +1,5 @@
 ﻿param(
-  [switch]$Volumes
+  [switch]$All
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,13 +18,12 @@ if (Test-Path $EnvFile) {
   $ComposeArgs += @("--env-file", $EnvFile)
 }
 
-$Cmd = @("down")
+$Cmd = @("ps")
 
-if ($Volumes) {
-  $Cmd += "--volumes"
+if ($All) {
+  $Cmd += "--all"
 }
 
-Write-Host "Stopping local Fire Forecast stack..."
 $AllArgs = $ComposeArgs + $Cmd
 & docker @AllArgs
 exit $LASTEXITCODE

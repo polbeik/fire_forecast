@@ -1,5 +1,7 @@
 ﻿param(
-  [switch]$Volumes
+  [string[]]$Service = @(),
+  [int]$Tail = 200,
+  [switch]$NoFollow
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,13 +20,14 @@ if (Test-Path $EnvFile) {
   $ComposeArgs += @("--env-file", $EnvFile)
 }
 
-$Cmd = @("down")
+$Cmd = @("logs", "--tail", $Tail.ToString())
 
-if ($Volumes) {
-  $Cmd += "--volumes"
+if (-not $NoFollow) {
+  $Cmd += "-f"
 }
 
-Write-Host "Stopping local Fire Forecast stack..."
+$Cmd += $Service
+
 $AllArgs = $ComposeArgs + $Cmd
 & docker @AllArgs
 exit $LASTEXITCODE
