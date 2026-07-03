@@ -4,10 +4,13 @@ from datetime import datetime, timezone
 from typing import Any
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query, Request
+
 from fire_common.schemas import HealthResponse
 
 SERVICE_NAME = "api-gateway"
+
+CATALOG_URL = "http://catalog-service:8101"
 
 SERVICES = {
     "catalog-service": "http://catalog-service:8101/health",
@@ -26,6 +29,22 @@ app = FastAPI(
     version="0.1.0",
     description="Entry point for wildfire segmentation, hindcasting, forecasting, and scenario simulation.",
 )
+
+
+async def _get_json(url: str, params: dict[str, Any] | None = None) -> Any:
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(url, params=params)
+    if response.status_code >= 400:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return response.json()
+
+
+async def _post_json(url: str, payload: dict[str, Any]) -> Any:
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(url, json=payload)
+    if response.status_code >= 400:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return response.json()
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -87,3 +106,44 @@ def modes() -> dict[str, Any]:
             "farsite_flammap_selected_benchmark",
         ],
     }
+
+
+@app.get("/api/floga/inventory")
+async def api_floga_inventory(
+    max_files: int = Query(default=5000, ge=1, le=200000),
+    recursive: bool = Query(default=False),
+) -> Any:
+    return await _get_json(
+        f"{CATALOG_URL}/floga/inventory",
+        params={
+            "max_files": max_files,
+            "recursive": recursive,
+        },
+    )
+
+
+@app.post("/api/scenarios")
+async def api_create_scenario(request: Request) -> Any:
+    payload = await request.json()
+    return await _post_json(f"{CATALOG_URL}/scenarios", payload)
+
+
+@app.get("/api/scenarios")
+async def api_list_scenarios(limit: int = Query(default=100, ge=1, le=10000)) -> Any:
+    return await _get_json(f"{CATALOG_URL}/scenarios", params={"limit": limit})
+
+
+@app.get("/api/scenarios/{scenario_id}")
+async def api_get_scenario(scenario_id: str) -> Any:
+    return await _get_json(f"{CATALOG_URL}/scenarios/{scenario_id}")
+
+
+@app.post("/api/observations")
+async def api_create_observation(request: Request) -> Any:
+    payload = await request.json()
+    return await _post_json(f"{CATALOG_URL}/observations", payload)
+
+
+@app.get("/api/observations")
+async def api_list_observations(limit: int = Query(default=100, ge=1, le=10000)) -> Any:
+    return await _get_json(f"{CATALOG_URL}/observations", params={"limit": limit})

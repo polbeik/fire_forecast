@@ -1,5 +1,19 @@
-﻿__all__ = [
+﻿from fire_common.schemas import (
+    FireObservation,
+    FireObservationCreateRequest,
+    FireObservationRecord,
+    FlogaInventoryResponse,
+    HealthResponse,
+    ScenarioCreateRequest,
+    ScenarioRun,
+)
+
+__all__ = [
     "FireObservation",
-    "ScenarioRun",
+    "FireObservationCreateRequest",
+    "FireObservationRecord",
+    "FlogaInventoryResponse",
     "HealthResponse",
+    "ScenarioCreateRequest",
+    "ScenarioRun",
 ]
