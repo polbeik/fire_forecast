@@ -1,6 +1,17 @@
 ﻿param(
   [int]$WaitSeconds = 60,
-  [string[]]$Url = @("http://localhost:8000/health"),
+  [string[]]$Url = @(
+    "http://localhost:8000/health",
+    "http://localhost:8101/health",
+    "http://localhost:8102/health",
+    "http://localhost:8103/health",
+    "http://localhost:8104/health",
+    "http://localhost:8105/health",
+    "http://localhost:8106/health",
+    "http://localhost:8107/health",
+    "http://localhost:8108/health",
+    "http://localhost:8109/health"
+  ),
   [switch]$RequireHttp
 )
 
@@ -14,11 +25,15 @@ if (-not (Test-Path $ComposeFile)) {
   throw "Compose file not found: $ComposeFile"
 }
 
-$ComposeArgs = @("compose", "--project-directory", $RepoRoot, "-f", $ComposeFile)
-
-if (Test-Path $EnvFile) {
-  $ComposeArgs += @("--env-file", $EnvFile)
+if (-not (Test-Path $EnvFile)) {
+  throw ".env file not found: $EnvFile"
 }
+
+$ComposeArgs = @(
+  "compose",
+  "--env-file", $EnvFile,
+  "-f", $ComposeFile
+)
 
 Write-Host "Validating Docker Compose config..."
 $ConfigArgs = $ComposeArgs + @("config", "--quiet")
@@ -107,6 +122,9 @@ if ($Failed.Count -gt 0) {
 
 $HttpFailures = @()
 
+Write-Host ""
+Write-Host "HTTP health endpoints:"
+
 foreach ($U in $Url) {
   $Ok = $false
   $LastError = $null
@@ -142,3 +160,4 @@ if ($RequireHttp -and $HttpFailures.Count -gt 0) {
 Write-Host ""
 Write-Host "Local stack health check completed."
 exit 0
+
