@@ -84,9 +84,12 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
-      - nats
-      - minio
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"]
       interval: 10s
@@ -109,7 +112,8 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8101/health', timeout=3).read()"]
       interval: 10s
@@ -132,9 +136,12 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
-      - nats
-      - minio
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8102/health', timeout=3).read()"]
       interval: 10s
@@ -157,8 +164,10 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8103/health', timeout=3).read()"]
       interval: 10s
@@ -181,8 +190,10 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8104/health', timeout=3).read()"]
       interval: 10s
@@ -205,9 +216,12 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
-      - nats
-      - minio
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8105/health', timeout=3).read()"]
       interval: 10s
@@ -230,8 +244,10 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8106/health', timeout=3).read()"]
       interval: 10s
@@ -254,8 +270,10 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8107/health', timeout=3).read()"]
       interval: 10s
@@ -278,8 +296,10 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8108/health', timeout=3).read()"]
       interval: 10s
@@ -302,7 +322,8 @@ services:
       - ../..:/app
       - "${DATA_ROOT_DOCKER}:/data"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8109/health', timeout=3).read()"]
       interval: 10s
