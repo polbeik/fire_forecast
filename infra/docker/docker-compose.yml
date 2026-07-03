@@ -53,7 +53,7 @@ services:
 
   api-gateway:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecast-api-gateway
     working_dir: /app/services/api-gateway
@@ -72,7 +72,7 @@ services:
 
   catalog-service:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecast-catalog-service
     working_dir: /app/services/catalog-service
@@ -89,7 +89,7 @@ services:
 
   ingestion-service:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecast-ingestion-service
     working_dir: /app/services/ingestion-service
@@ -108,7 +108,7 @@ services:
 
   preprocessing-service:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecast-preprocessing-service
     working_dir: /app/services/preprocessing-service
@@ -126,7 +126,7 @@ services:
 
   segmentation-service:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecast-segmentation-service
     working_dir: /app/services/segmentation-service
@@ -144,7 +144,7 @@ services:
 
   forecasting-service:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecasting-service
     working_dir: /app/services/forecasting-service
@@ -163,7 +163,7 @@ services:
 
   pinn-service:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecast-pinn-service
     working_dir: /app/services/pinn-service
@@ -181,7 +181,7 @@ services:
 
   simulation-adapter-service:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecast-simulation-adapter-service
     working_dir: /app/services/simulation-adapter-service
@@ -199,7 +199,7 @@ services:
 
   visualization-service:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecast-visualization-service
     working_dir: /app/services/visualization-service
@@ -217,7 +217,7 @@ services:
 
   plugin-adapter-service:
     build:
-      context: ../..
+      context: .
       dockerfile: infra/docker/Dockerfile.fastapi
     container_name: fire-forecast-plugin-adapter-service
     working_dir: /app/services/plugin-adapter-service
