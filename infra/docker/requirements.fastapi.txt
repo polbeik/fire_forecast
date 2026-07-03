@@ -10,3 +10,5 @@ nats-py==2.9.0
 minio==7.2.12
 python-dotenv==1.0.1
 orjson==3.10.12
+numpy==2.2.6
+h5py==3.12.1
