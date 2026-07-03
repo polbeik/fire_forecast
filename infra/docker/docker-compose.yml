@@ -59,7 +59,7 @@ services:
     working_dir: /app/services/api-gateway
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8000:8000"
     volumes:
@@ -78,7 +78,7 @@ services:
     working_dir: /app/services/catalog-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8101 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8101:8101"
     volumes:
@@ -95,7 +95,7 @@ services:
     working_dir: /app/services/ingestion-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8102 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8102:8102"
     volumes:
@@ -114,7 +114,7 @@ services:
     working_dir: /app/services/preprocessing-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8103 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8103:8103"
     volumes:
@@ -132,7 +132,7 @@ services:
     working_dir: /app/services/segmentation-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8104 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8104:8104"
     volumes:
@@ -150,7 +150,7 @@ services:
     working_dir: /app/services/forecasting-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8105 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8105:8105"
     volumes:
@@ -169,7 +169,7 @@ services:
     working_dir: /app/services/pinn-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8106 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8106:8106"
     volumes:
@@ -187,7 +187,7 @@ services:
     working_dir: /app/services/simulation-adapter-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8107 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8107:8107"
     volumes:
@@ -205,7 +205,7 @@ services:
     working_dir: /app/services/visualization-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8108 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8108:8108"
     volumes:
@@ -223,7 +223,7 @@ services:
     working_dir: /app/services/plugin-adapter-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8109 --reload
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "8109:8109"
     volumes:
