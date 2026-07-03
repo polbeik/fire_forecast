@@ -82,3 +82,57 @@ runtime-baseline-2026-07-03 marks the stable Docker runtime baseline before help
 
 helper-scripts-2026-07-03 marks the validated helper-script workflow.
 
+<!-- LOCAL_DOCKER_WORKFLOW_START -->
+
+## Local Docker workflow
+
+The local Docker stack is designed to be started from the repository root.
+
+### Recommended startup
+
+Use the helper scripts:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\run-local.ps1
+.\scripts\health-local.ps1
+```
+
+To stop the local stack:
+
+```powershell
+.\scripts\stop-local.ps1
+```
+
+### Equivalent explicit Docker Compose invocation
+
+If the helper scripts are not used, Docker Compose must be called explicitly with the compose file path:
+
+```powershell
+docker compose --env-file .env -f infra/docker/docker-compose.yml up -d --build
+docker compose --env-file .env -f infra/docker/docker-compose.yml ps
+```
+
+To stop the stack explicitly:
+
+```powershell
+docker compose --env-file .env -f infra/docker/docker-compose.yml down
+```
+
+### Important
+
+Do not start the project with bare Docker Compose:
+
+```powershell
+docker compose up
+```
+
+Bare `docker compose up` depends on Compose discovering a compose file in the current directory. In this project, the local Compose file lives under `infra/docker/docker-compose.yml`, so the supported local workflow is either:
+
+1. `.\scripts\run-local.ps1`, `.\scripts\health-local.ps1`, `.\scripts\stop-local.ps1`
+2. Explicit Compose commands using `-f infra/docker/docker-compose.yml`
+
+This avoids accidentally starting an incomplete or wrong local stack.
+
+<!-- LOCAL_DOCKER_WORKFLOW_END -->
+
