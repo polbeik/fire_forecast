@@ -32,3 +32,6 @@ def info() -> dict:
         "data_root": os.getenv("DATA_ROOT_DOCKER", "/data"),
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+from app.floga_2021 import router as floga_2021_router
+app.include_router(floga_2021_router)

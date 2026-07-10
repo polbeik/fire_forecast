@@ -136,3 +136,33 @@ This avoids accidentally starting an incomplete or wrong local stack.
 
 <!-- LOCAL_DOCKER_WORKFLOW_END -->
 
+<!-- OPERATIONAL_EVALUATION_DATA_POLICY_START -->
+
+## Operational evaluation data policy
+
+Fire Forecast separates retrospective experimentation from operationally valid evaluation.
+
+For any result described as operational, near-real-time, deployable, or decision-support evaluation, the weather input must have been available as archived forecast weather for the target event time. Historical actuals, reanalysis, corrected observations, and any fallback derived from post-event knowledge are not valid inputs for operational evaluation.
+
+Current operational evaluation candidate set:
+
+- Dataset: FLOGA 2021
+- Candidate events: determined dynamically from the unique 2021 event IDs in `data_split.csv`
+- Split membership fields: `year`, `event_id`, and `set`
+- Operational weather eligibility: determined separately from an explicit per-event archived-forecast coverage manifest
+- Required eligibility evidence: archived-forecast coverage confirmation, weather source type, provider, model, and forecast/model run reference time
+- Current target weather source: Open-Meteo Historical Forecast API, model `gfs_global`
+- Events without explicit eligibility evidence remain ineligible by default
+
+Policy rules:
+
+1. Operational evaluation requires `archived_forecast` weather.
+2. Archived-forecast coverage must be explicitly confirmed for each event.
+3. Weather provider, model, and forecast/model run reference time are mandatory.
+4. `historical_actual`, reanalysis, observation-derived, and post-event fallback weather are forbidden for operational evaluation.
+5. Data from those retrospective sources may be used only for diagnostic or retrospective experiments and must not be reported as operational evaluation.
+6. Candidate-event counts and eligible-event counts must be calculated from the mounted data and eligibility manifest; they must not be hard-coded.
+
+This policy is enforced by catalog-service validation and exposed through ingestion-service FLOGA 2021 inventory endpoints.
+
+<!-- OPERATIONAL_EVALUATION_DATA_POLICY_END -->

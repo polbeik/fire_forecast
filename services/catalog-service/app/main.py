@@ -242,3 +242,6 @@ def list_observations(limit: int = Query(default=100, ge=1, le=10000)) -> dict[s
         "count": len(records),
         "items": records[-limit:],
     }
+
+from app.operational_evaluation_policy import router as operational_evaluation_policy_router
+app.include_router(operational_evaluation_policy_router)
